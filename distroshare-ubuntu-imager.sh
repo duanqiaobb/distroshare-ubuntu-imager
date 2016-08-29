@@ -83,9 +83,9 @@ then
     ARCH=`/usr/bin/arch`
     if [ "$ARCH" == "x86_64" ]
     then 
-	apt-get -q=2 install grub-efi-amd64
+        apt-get -q=2 install grub-efi-amd64
     else
-	apt-get -q=2 install grub-efi-ia32
+        apt-get -q=2 install grub-efi-ia32
     fi
 else
     apt-get -q=2 install grub-pc
@@ -95,14 +95,14 @@ fi
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
 if [ "$GTK" == "YES" ]; then
-   apt-get -q=2 install ubiquity-frontend-gtk
+    apt-get -q=2 install ubiquity-frontend-gtk
 else
-   apt-get -q=2 install ubiquity-frontend-kde
+    apt-get -q=2 install ubiquity-frontend-kde
 fi
 
 if [ -n "$EXTRA_PKGS" ]; then
-   echo "Adding extra packages to installed system"
-   apt-get -q=2 install "$EXTRA_PKGS"
+    echo "Adding extra packages to installed system"
+    apt-get -q=2 install "$EXTRA_PKGS"
 fi
 
 echo "Patching Ubiquity to fix a possible installer crash"
@@ -128,35 +128,43 @@ fi
 
 if [ "$DISTROSHARE_UPDATER" == "YES" ]
 then
-   echo "Patching Ubiquity to rsync skel files from distroshare updater"
-   cp /usr/lib/ubiquity/user-setup/user-setup-apply .
-   patch < user-setup-apply.patch
-   cp user-setup-apply /usr/lib/ubiquity/user-setup/user-setup-apply
-   rm -f user-setup-apply
+    echo "Patching Ubiquity to rsync skel files from distroshare updater"
+    cp /usr/lib/ubiquity/user-setup/user-setup-apply .
+    patch < user-setup-apply.patch
+    cp user-setup-apply /usr/lib/ubiquity/user-setup/user-setup-apply
+    rm -f user-setup-apply
 
-   echo "Patching user-setup to rsync skel files from distroshare updater"
-   cp /usr/lib/user-setup/user-setup-apply .
-   patch < user-setup-apply.patch
-   cp user-setup-apply /usr/lib/user-setup/user-setup-apply
-   rm -f user-setup-apply
+    echo "Patching user-setup to rsync skel files from distroshare updater"
+    cp /usr/lib/user-setup/user-setup-apply .
+    patch < user-setup-apply.patch
+    cp user-setup-apply /usr/lib/user-setup/user-setup-apply
+    rm -f user-setup-apply
 fi
 
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
---exclude=/sys/* --exclude=/tmp/* --exclude=/run/* \
---exclude=/home/* --exclude=/lost+found \
---exclude=/var/tmp/* --exclude=/boot --exclude=/root/* \
---exclude=/var/mail/* --exclude=/var/spool/* --exclude=/media/* \
---exclude=/etc/hosts --exclude=/etc/default/locale \
---exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
---exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
---exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs \
---exclude=/etc/default/du-firstrun --delete / "${WORK}"/rootfs
+    --exclude=/sys/* --exclude=/tmp/* --exclude=/run/* \
+    --exclude=/home/* --exclude=/lost+found \
+    --exclude=/var/tmp/* --exclude=/boot --exclude=/root/* \
+    --exclude=/var/mail/* --exclude=/var/spool/* --exclude=/media/* \
+    --exclude=/etc/hosts --exclude=/etc/default/locale \
+    --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
+    --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
+    --exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs \
+    --exclude=/etc/default/du-firstrun --delete / "${WORK}"/rootfs
 
 #Copy boot partition
 echo "Copying the boot dir/partition"
 rsync -a --one-file-system /boot/ "${WORK}"/rootfs/boot
+
+#Copy configurations in home directory,you can add some files in CONFIG variable
+CONFIG=".vim .vimrc .bashrc .zshrc .tmux .tmux.conf .oh-my-zsh "
+cd ~ && for i in $CONFIG 
+do 
+    sudo cp -rpv --parents  $i "${WORK}"/rootfs/etc/skel
+done
+
 
 #Unmount the filesystems in case the script failed before
 unmount_filesystems
@@ -350,9 +358,9 @@ mount -t sysfs sysfs "${WORK}"/rootfs/sys
 echo "Removing non-system users"
 for i in `cat "${WORK}"/rootfs/etc/passwd | awk -F":" '{print $1}'`
 do
-   uid=`cat "${WORK}"/rootfs/etc/passwd | grep "^${i}:" | awk -F":" '{print $3}'`
-   [ "$uid" -gt "998" -a  "$uid" -ne "65534"  ] && \
-       chroot "${WORK}"/rootfs /bin/bash -c "userdel --force ${i} 2> /dev/null"
+    uid=`cat "${WORK}"/rootfs/etc/passwd | grep "^${i}:" | awk -F":" '{print $3}'`
+    [ "$uid" -gt "998" -a  "$uid" -ne "65534"  ] && \
+        chroot "${WORK}"/rootfs /bin/bash -c "userdel --force ${i} 2> /dev/null"
 done
 
 #Source lsb-release for DISTRIB_ID
@@ -367,9 +375,9 @@ umask 022
 
 #Modify copied distro
 if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
-  echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
-  sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
-/usr/share/grub-installer/grub-installer
+    echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
+    sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
+        /usr/share/grub-installer/grub-installer
 fi
 
 #Set flavour in /etc/casper.conf
@@ -379,13 +387,13 @@ echo "Setting up display manager for autologin if needed"
 #Testing for MDM and applying specific changes for it
 if [ "${DM}" == "MDM" ]; then
     sed -i 's/gdm\/custom.conf/mdm\/mdm.conf/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
     mkdir -p /etc/mdm
     echo "[daemon]
-#AutomaticLoginEnable = false
-#AutomaticLogin = none
-#TimedLoginEnable = false
-" > /etc/mdm/mdm.conf
+    #AutomaticLoginEnable = false
+    #AutomaticLogin = none
+    #TimedLoginEnable = false
+    " > /etc/mdm/mdm.conf
     #Copy /etc/apt/sources.list to /etc/apt/sources.list.new
     cp /etc/apt/sources.list /etc/apt/sources.list.new
 fi
@@ -394,62 +402,62 @@ fi
 if [ "${DM}" == "GDM" ]; then
     mkdir -p /etc/gdm
     echo "[daemon]
-#AutomaticLoginEnable = false
-#AutomaticLogin = none
-#TimedLoginEnable = false
-" > /etc/gdm/custom.conf
+    #AutomaticLoginEnable = false
+    #AutomaticLogin = none
+    #TimedLoginEnable = false
+    " > /etc/gdm/custom.conf
 fi
 
 if [ "${DM}" == "KDM" ]; then
     mkdir -p /etc/kde4/kdm
     echo "[X-:0-Core]
-AutoLoginEnable=false
-AutoLoginUser=none
-AutoReLogin=false
-" > /etc/kde4/kdm/kdmrc
+    AutoLoginEnable=false
+    AutoLoginUser=none
+    AutoReLogin=false
+    " > /etc/kde4/kdm/kdmrc
 fi
 
 if [ "${DM}" == "LIGHTDM_UBUNTU_MATE" ]; then
- sed -i 's/\/etc\/lightdm\/lightdm.conf/\/usr\/share\/lightdm\/lightdm.conf.d\/60-lightdm-gtk-greeter.conf/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    sed -i 's/\/etc\/lightdm\/lightdm.conf/\/usr\/share\/lightdm\/lightdm.conf.d\/60-lightdm-gtk-greeter.conf/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 
- sed -i 's/autologin-session=lightdm-autologin/user-session=mate/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    sed -i 's/autologin-session=lightdm-autologin/user-session=mate/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
 if [ "${DM}" == "LIGHTDM_ZORIN" ]; then
- echo "[SeatDefaults]
-user-session=zorin_desktop
-" > /etc/lightdm/lightdm.conf
+    echo "[SeatDefaults]
+    user-session=zorin_desktop
+    " > /etc/lightdm/lightdm.conf
 
- sed -i 's/autologin-session=lightdm-autologin/user-session=zorin_desktop/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    sed -i 's/autologin-session=lightdm-autologin/user-session=zorin_desktop/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
 if [ "${DM}" == "LIGHTDM_KODIBUNTU" ]; then
- echo "[SeatDefaults]
-xserver-command=/usr/bin/X -bs -nolisten tcp
-user-session=kodi
-allow-guest=false
-greeter-session=lightdm-gtk-greeter
-" > /etc/lightdm/lightdm.conf
+    echo "[SeatDefaults]
+    xserver-command=/usr/bin/X -bs -nolisten tcp
+    user-session=kodi
+    allow-guest=false
+    greeter-session=lightdm-gtk-greeter
+    " > /etc/lightdm/lightdm.conf
 
- sed -i 's/autologin-session=lightdm-autologin/user-session=kodi/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    sed -i 's/autologin-session=lightdm-autologin/user-session=kodi/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
 if [ "${DM}" == "LIGHTDM_DEEPIN" ]; then
- echo "[SeatDefaults]
-greeter-session=lightdm-deepin-greeter
-user-session=deepin
-" > /etc/lightdm/lightdm.conf
+    echo "[SeatDefaults]
+    greeter-session=lightdm-deepin-greeter
+    user-session=deepin
+    " > /etc/lightdm/lightdm.conf
 
- sed -i 's/autologin-session=lightdm-autologin/user-session=deepin/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    sed -i 's/autologin-session=lightdm-autologin/user-session=deepin/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 
- #Fix for installer icon on desktop 
- sed -i 's/ubiquity.desktop/ubiquity-gtkui.desktop/' \
-/usr/share/initramfs-tools/scripts/casper-bottom/25adduser
+    #Fix for installer icon on desktop 
+    sed -i 's/ubiquity.desktop/ubiquity-gtkui.desktop/' \
+        /usr/share/initramfs-tools/scripts/casper-bottom/25adduser
 fi
 
 #Update initramfs 
@@ -460,7 +468,6 @@ update-initramfs -u -k all > /dev/null 2>&1
 #Clean up downloaded packages
 echo "Cleaning up files that are not needed in the new image"
 apt-get clean
-
 #Clean up files
 #rm -f /etc/X11/xorg.conf*
 rm -f /etc/hosts
@@ -490,18 +497,18 @@ rm -rf /var/run/console/*
 
 #If /var/run is a link, then it is pointing to /run
 if [ ! -L /var/run ]; then
-  find /var/run/ -type f -exec rm -f {} \;
+    find /var/run/ -type f -exec rm -f {} \;
 fi
 
 #If /var/lock is a link, then it is pointing to /run/lock
 if [ ! -L /var/lock ]; then
-  find /var/lock/ -type f -exec rm -f {} \;
+    find /var/lock/ -type f -exec rm -f {} \;
 fi
 
 #Clean up files - taken from BlackLab Imager
 find /var/backups/ /var/spool/ /var/mail/ \
-/var/tmp/ /var/crash/ \
-/var/lib/ubiquity/ -type f -exec rm -f {} \;
+    /var/tmp/ /var/crash/ \
+    /var/lib/ubiquity/ -type f -exec rm -f {} \;
 
 #Remove archived logs
 find /var/log -type f -name '*.[0-9]*' -exec rm -f {} \;
@@ -529,7 +536,7 @@ cp "${CASPER}"/filesystem.manifest "${CASPER}"/filesystem.manifest-desktop
 REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data cifs-utils  gir1.2-appindicator3-0.1 gir1.2-javascriptcoregtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0' 
 for i in $REMOVE
 do
-   sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
+    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
 done
 
 #Remove the extra script created to prevent an error message
@@ -539,8 +546,8 @@ echo "Uninstalling Ubiquity"
 apt-get -q=2 remove casper lupin-casper ubiquity user-setup
 
 if [ -n "$EXTRA_PKGS" ]; then
-   echo "Removing extra packages from installed system"
-   apt-get -q=2 remove "$EXTRA_PKGS"
+    echo "Removing extra packages from installed system"
+    apt-get -q=2 remove "$EXTRA_PKGS"
 fi
 
 if [ -n "$GRUB2_INSTALLED" -a "$EFI" == "YES" ]
@@ -583,6 +590,11 @@ linux /casper/vmlinuz boot=casper $KERNEL_PARAMS xforcevesa quiet splash --
 initrd /casper/initrd.img
 }
 
+menuentry \"Install Ubuntu in your computer\" {
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS only-ubiquity quiet splash --
+initrd /casper/initrd.img
+}
+
 menuentry \"Check Disk for Defects\" {
 linux /casper/vmlinuz boot=casper $KERNEL_PARAMS integrity-check quiet splash --
 initrd /casper/initrd.img
@@ -599,7 +611,11 @@ chainloader +1
 " > "${CD}"/boot/grub/grub.cfg
 
 echo "Creating the iso"
-grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
+#grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
+#add support for > 4GB filesystem.squashfs 
+mkisofs -allow-limited-size -l -J -r -iso-level 3 -o "${WORK}"/live-cd.iso "${CD}"
+
+
 
 echo "We are done."
 echo "Is your distro interesting or customized for a specific machine?"
